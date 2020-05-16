@@ -37,8 +37,8 @@ def get_initial_pose_client(robot_ns, parent_frame, child_frame):
 if __name__ == "__main__":
     rospy.init_node('intial_pose')
     robot_ns = rospy.get_param('/robot_ns', '/X1')
-    parent_frame = rospy.get_param('/parent_frame','/world')
-    child_frame = rospy.get_param('/child_frame','/base_imu_link')
+    parent_frame = rospy.get_param('/parent_frame','/base_gx5_link')
+    child_frame = rospy.get_param('/child_frame','/world')
     get_initial_pose_client()
     rospy.spinOnce()    
 
