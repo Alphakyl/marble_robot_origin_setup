@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="marble_robot_origin_setup" type="sim_origin_detection.py" name="x1_origin" output="screen"/>
+</launch>
