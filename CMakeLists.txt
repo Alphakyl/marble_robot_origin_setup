@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   subt_msgs
   tf2_ros
   std_msgs
+  tf2_msgs
 )
 
 ## System dependencies are found with CMake's conventions
