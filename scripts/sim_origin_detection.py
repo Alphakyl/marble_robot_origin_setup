@@ -8,6 +8,8 @@ from tf2_msgs.msg import TFMessage
 from geometry_msgs.msg import *
 from std_msgs.msg import String
 from subt_msgs.srv import *
+import tf
+
 
 class FixedTFBroadcaster:
     def __init__(self, robot_ns, parent_frame, child_frame):
@@ -17,13 +19,32 @@ class FixedTFBroadcaster:
         self.transform_broadcaster = tf2_ros.TransformBroadcaster()
         # Call the subt origin service
         self.tf = self.get_initial_pose_client(robot_ns, parent_frame, child_frame)
+        invert = False
+        if invert is True:
+            rot_matrix = tf.transformations.quaternion_matrix([self.tf.transform.rotation.x,self.tf.transform.rotation.y,self.tf.transform.rotation.z,self.tf.transform.rotation.w])
+            trans_matrix = tf.transformations.translation_matrix([self.tf.transform.translation.x, self.tf.transform.translation.y, self.tf.transform.translation.z])
+            full_trans_matrix = tf.transformations.concatenate_matrices(trans_matrix, rot_matrix)
+            invert_parent_and_child = tf.transformations.inverse_matrix(full_trans_matrix)
+            tf_msg = TransformStamped()
+            tf_msg.header.frame_id = child_frame
+            tf_msg.child_frame_id = parent_frame
+            tf_msg.header.stamp = self.tf.header.stamp
+            tf_msg.transform.translation.x = tf.transformations.translation_from_matrix(invert_parent_and_child)[0]
+            tf_msg.transform.translation.y = tf.transformations.translation_from_matrix(invert_parent_and_child)[1]
+            tf_msg.transform.translation.z = tf.transformations.translation_from_matrix(invert_parent_and_child)[2]
+            tf_msg.transform.rotation.x = tf.transformations.quaternion_from_matrix(invert_parent_and_child)[0]
+            tf_msg.transform.rotation.y = tf.transformations.quaternion_from_matrix(invert_parent_and_child)[1]
+            tf_msg.transform.rotation.z = tf.transformations.quaternion_from_matrix(invert_parent_and_child)[2]
+            tf_msg.transform.rotation.w = tf.transformations.quaternion_from_matrix(invert_parent_and_child)[3]
+        else:
+            tf_msg = self.tf
 
         # while ros exists
         while not rospy.is_shutdown():
             # Get the TF Message
-            tfm = TFMessage([self.tf])
+            tfm = TFMessage([tf_msg])
             # Broadcast and publish the TF
-            self.transform_broadcaster.sendTransform(self.tf)
+            self.transform_broadcaster.sendTransform(tf_msg)
             self.pub_tf.publish(tfm)
 
     def get_initial_pose_client(self, robot_ns, parent_frame, child_frame):
@@ -63,11 +84,11 @@ if __name__ == "__main__":
 
     # Get robot name from parameter and store in std_msgs string
     robot_ns = String()
-    robot_ns.data = rospy.get_param('/robot_ns', 'X1')
+    robot_ns.data = rospy.get_param('/robot_ns', 'MARBLE_HUSKY')
 
     # Set up parent and child frame of TF
-    parent_frame = robot_ns.data + '/map'
-    child_frame = 'world'
+    child_frame = robot_ns.data + '/map'
+    parent_frame = 'world'
 
     # Call TFBroadcaster Class
     tfb = FixedTFBroadcaster(robot_ns, parent_frame, child_frame)
